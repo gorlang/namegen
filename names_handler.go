@@ -18,7 +18,7 @@ type RespNames struct {
 
 /*
 	Marshalls the result to JSON
-	TODO Implement parameters used to control the generation on names
+	TODO Implement handling of parameters used to control the generation on names
 */
 
 func NamesHandler(w http.ResponseWriter, r *http.Request) {
