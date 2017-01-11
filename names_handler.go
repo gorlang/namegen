@@ -42,10 +42,11 @@ func NamesHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := decoder.Decode(&ctx)
 	if err != nil {
-		panic(err)
 		respNames.Status = "error"
 	} else {
+		fmt.Println("ctx", ctx)
 		respNames = buildRespNames(&ctx)
+		fmt.Println("respNames", respNames)
 	}
 
 	b, err := json.Marshal(&respNames)

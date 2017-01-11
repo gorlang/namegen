@@ -51,6 +51,11 @@ func GenerateNames(ctx *Context) []string {
 
 	config(ctx)
 
+	if len(ctx.Syllables) <= 0 {
+		empty := []string{"Vowels or consonants must be present.", "Please, edit Settings under 'Exclude'.", "", "", "", "", "", "", "", ""}
+		return empty
+	}
+
 	result := []string{}
 	for i := 1; i <= ctx.NameCount; i++ {
 		result = append(result, getRandomName(ctx))
@@ -134,6 +139,20 @@ func isVowel(c rune, ctx *Context) bool {
 	return false
 }
 
+func isDupType(c1 rune, c2 rune, ctx *Context) bool {
+
+	if isVowel(c1, ctx) {
+		if isVowel(c2, ctx) {
+			return true
+		}
+	} else {
+		if !isVowel(c2, ctx) {
+			return true
+		}
+	}
+	return false
+}
+
 func getRandomName(ctx *Context) string {
 
 	name := ""
@@ -144,22 +163,49 @@ func getRandomName(ctx *Context) string {
 
 	// remove duplicate sequences like ee, aa etc.
 	if ctx.Dedup {
-		deduped := ""
-		i := 0
-		for j := 0; j < len(name); j++ {
-			if i < len(name)-1 {
-				if name[i] != name[i+1] {
-					deduped += string(name[i])
-					i++
-				} else {
-					i++
-				}
-			}
-		}
-		name = deduped
+		name = dedupe(name, ctx)
 	}
 
 	return name
+}
+
+/*
+	Remove duplicates in name like aa,bb,cc etc.
+*/
+
+func dedupe(name string, ctx *Context) string {
+
+	deduped := ""
+	i := 0
+	for j := 0; j < len(name); j++ {
+		if i < len(name)-1 { // next last letter
+			if name[i] != name[i+1] {
+				// dedupe consonants/vowels
+				if i == 0 {
+					// but not on first-second char
+					deduped += string(name[i])
+					i++
+				} else {
+					if !isDupType(rune(name[i]), rune(name[i+1]), ctx) {
+						deduped += string(name[i])
+						i++
+					} else {
+						// duplicate type move on
+						i++
+					}
+				}
+			} else {
+				// duplicate chars in sequence move on
+				i++
+			}
+		} else {
+			// add last char
+			deduped += string(name[i])
+		}
+
+	}
+
+	return deduped
 }
 
 func getRandomPart(part_type string, ctx *Context) string {
