@@ -7,19 +7,20 @@ import (
 
 func TestGenerateNames(t *testing.T) {
 
-	filter_consonants := "fhjvqwxz"
-	filter_vowels := "uyoi"
-	prefix := []string{"go", "dat", "it"}
-	suffix := []string{"lo", "mo"}
-	name_count := 10
-	pattern := []string{PREFIX, SYLLABLE, SYLLABLE, SUFFIX}
-	dedup := false
+	ctx := Context{}
+	ctx.FilterConsonants = "fhjvqwxz"
+	ctx.FilterVowels = "uyoi"
+	ctx.Prefix = []string{"go"}
+	ctx.Suffix = []string{"lo"}
+	ctx.NameCount = 10
+	ctx.Pattern = []string{PREFIX, SYLLABLE, SYLLABLE, SUFFIX}
+	ctx.Dedup = false
 
-	res := GenerateNames(pattern, prefix, suffix, filter_consonants, filter_vowels, dedup, name_count)
+	res := GenerateNames(&ctx)
 
 	for _, name := range res {
 		fmt.Println(name)
-		// tests go here, for example check if filters, pattern, dedup works
+		// tests go here, for example check if filters, pattern, prefix, suffix, dedup works
 	}
 }
 

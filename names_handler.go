@@ -1,8 +1,18 @@
 package main
 
 /*
- Just a sample implementation.
- All arguments are hard coded at this stage.
+ Just a sample implementation of a simple REST service.
+ Arguments to name generation service is translated from JSON to a Context struct.
+ JSON format:
+ {
+	"Pattern": ["C", S", "S", "S", "V"],
+	"Prefix": ["go", "lo"],
+	"Suffix": ["la", "na"],
+	"FilterConsonants": "qxlvwyc",
+	"FilterVowels": "ao",
+	"Dedup": true,
+	"NameCount": 10
+}
 */
 
 import (
@@ -13,27 +23,35 @@ import (
 )
 
 type RespNames struct {
-	Names []string
+	Status string
+	Names  []string
 }
 
 /*
 	Marshalls the result to JSON
-	TODO Implement handling of parameters used to control the generation on names
+	TODO Implement handling of marshaling error
 */
 
 func NamesHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("NamesHandler, name_count:" + r.URL.Query().Get("name_count"))
+	fmt.Println("NamesHandler")
 
-	respNames := buildRespNames()
-	b, err := json.Marshal(&respNames)
+	respNames := RespNames{}
+	var ctx Context
+	decoder := json.NewDecoder(r.Body)
 
-	var out bytes.Buffer
-	err = json.Indent(&out, b, "", "\t")
-
+	err := decoder.Decode(&ctx)
 	if err != nil {
 		panic(err)
+		respNames.Status = "error"
+	} else {
+		respNames = buildRespNames(&ctx)
 	}
+
+	b, err := json.Marshal(&respNames)
+	var out bytes.Buffer
+	err = json.Indent(&out, b, "", "\t")
+	// TODO handle errors
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -44,27 +62,12 @@ func NamesHandler(w http.ResponseWriter, r *http.Request) {
 	Calls the names generator and returns result
 */
 
-func buildRespNames() RespNames {
+func buildRespNames(ctx *Context) RespNames {
 
-	fmt.Println("buildResponse")
+	fmt.Println("buildRespNames")
 
-	filter_consonants := "fhjvqwxz"
-	filter_vowels := "uyoi"
-	prefix := []string{"go", "dat", "it"}
-	suffix := []string{"lo", "mo"}
-	name_count := 10
-	pattern := []string{PREFIX, SYLLABLE, SYLLABLE, SUFFIX}
-	dedup := true
+	names := GenerateNames(ctx)
+	r := RespNames{"ok", names}
 
-	names := GenerateNames(
-		pattern,
-		prefix,
-		suffix,
-		filter_consonants,
-		filter_vowels,
-		dedup,
-		name_count)
-
-	r := RespNames{names}
 	return r
 }

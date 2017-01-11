@@ -17,44 +17,43 @@ const SUFFIX string = "SUF"
 
 /*
 	Context holds the config and settings.
+
+	Pattern:			The sequence of prefix, syllables, single chars and suffix.
+	Prefix:				Array of strings to use as prefix.
+	Suffix:				Array of strings to use as suffix.
+	FilterConsonants:	A string containing consonants to exclude in final name.
+	FilterVowels:		A string containing vowels to exclude in final name.
+	Dedup:				True if double letters as aa, ee, uu should be removed.
+	NameCount:			Number of names to generate.
+	Vowels:				Filtered vowels to use.
+	Consonants:			Filtered consonants to use.
+	Syllables:			Generated syllables to use.
 */
 
 type Context struct {
-	vowels     []rune
-	consonants []rune
-	syllables  []string
-	prefix     []string
-	suffix     []string
-	dedup      bool
+	Pattern          []string
+	FilterConsonants string
+	FilterVowels     string
+	Prefix           []string
+	Suffix           []string
+	Dedup            bool
+	NameCount        int
+	Consonants       []rune
+	Vowels           []rune
+	Syllables        []string
 }
 
 /*
 	Generates random company or product names with some predefined rules that can be specified.
-
-	pattern:			The sequence of prefix, syllables, single chars and suffix.
-	prefix:				Array of strings to use as prefix
-	suffix:				Array of strings to use as suffix
-	filter_consonants:	A string containing consonants to exclude in final name
-	filter_vowels:		A string containing vowels to exclude in final name
-	dedup:				True if double letters as aa, ee, uu should be removed
-	name_count:			Number of names to generate
 */
 
-func GenerateNames(
-	pattern []string,
-	prefix []string,
-	suffix []string,
-	filter_consonants string,
-	filter_vowels string,
-	dedup bool,
-	name_count int) []string {
+func GenerateNames(ctx *Context) []string {
 
-	ctx := Context{}
-	config(&ctx, filter_consonants, filter_vowels, prefix, suffix, dedup)
+	config(ctx)
 
 	result := []string{}
-	for i := 1; i <= name_count; i++ {
-		result = append(result, getRandomName(pattern, &ctx))
+	for i := 1; i <= ctx.NameCount; i++ {
+		result = append(result, getRandomName(ctx))
 	}
 	return result
 }
@@ -86,24 +85,20 @@ func filterList(list []rune, filter string) []rune {
 	Generate syllables.
 */
 
-func config(ctx *Context, filter_consonants string, filter_vowels string, prefix []string, suffix []string, dedup bool) {
+func config(ctx *Context) {
 
-	ctx.vowels = []rune{'a', 'e', 'i', 'o', 'u', 'y'}
-	ctx.consonants = []rune{'a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z'}
+	ctx.Vowels = []rune{'a', 'e', 'i', 'o', 'u', 'y'}
+	ctx.Consonants = []rune{'a', 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z'}
 
-	if filter_consonants != "" {
-		c_filtered := filterList(ctx.consonants, filter_consonants)
-		ctx.consonants = c_filtered
+	if ctx.FilterConsonants != "" {
+		c_filtered := filterList(ctx.Consonants, ctx.FilterConsonants)
+		ctx.Consonants = c_filtered
 	}
 
-	if filter_vowels != "" {
-		v_filtered := filterList(ctx.vowels, filter_vowels)
-		ctx.vowels = v_filtered
+	if ctx.FilterVowels != "" {
+		v_filtered := filterList(ctx.Vowels, ctx.FilterVowels)
+		ctx.Vowels = v_filtered
 	}
-
-	ctx.prefix = prefix
-	ctx.suffix = suffix
-	ctx.dedup = dedup
 
 	generateSyllables(ctx)
 }
@@ -114,12 +109,12 @@ func config(ctx *Context, filter_consonants string, filter_vowels string, prefix
 
 func generateSyllables(ctx *Context) {
 
-	for _, c := range ctx.consonants {
-		for _, v := range ctx.vowels {
+	for _, c := range ctx.Consonants {
+		for _, v := range ctx.Vowels {
 			syl1 := string(c) + string(v)
 			syl2 := string(v) + string(c)
-			ctx.syllables = append(ctx.syllables, syl1)
-			ctx.syllables = append(ctx.syllables, syl2)
+			ctx.Syllables = append(ctx.Syllables, syl1)
+			ctx.Syllables = append(ctx.Syllables, syl2)
 		}
 	}
 }
@@ -131,7 +126,7 @@ func generateSyllables(ctx *Context) {
 
 func isVowel(c rune, ctx *Context) bool {
 
-	for _, v := range ctx.vowels {
+	for _, v := range ctx.Vowels {
 		if c == v {
 			return true
 		}
@@ -139,16 +134,16 @@ func isVowel(c rune, ctx *Context) bool {
 	return false
 }
 
-func getRandomName(pattern []string, ctx *Context) string {
+func getRandomName(ctx *Context) string {
 
 	name := ""
-	for _, part_type := range pattern {
+	for _, part_type := range ctx.Pattern {
 		name += string(getRandomPart(part_type, ctx))
 
 	}
 
 	// remove duplicate sequences like ee, aa etc.
-	if ctx.dedup {
+	if ctx.Dedup {
 		deduped := ""
 		i := 0
 		for j := 0; j < len(name); j++ {
@@ -174,19 +169,19 @@ func getRandomPart(part_type string, ctx *Context) string {
 
 	switch string(part_type) {
 	case VOWEL:
-		ix := r.Intn(len(ctx.vowels))
-		return string(ctx.vowels[ix])
+		ix := r.Intn(len(ctx.Vowels))
+		return string(ctx.Vowels[ix])
 	case CONSONANT:
-		ix := r.Intn(len(ctx.consonants))
-		return string(ctx.consonants[ix])
+		ix := r.Intn(len(ctx.Consonants))
+		return string(ctx.Consonants[ix])
 	case PREFIX:
-		ix := r.Intn(len(ctx.prefix))
-		return string(ctx.prefix[ix])
+		ix := r.Intn(len(ctx.Prefix))
+		return string(ctx.Prefix[ix])
 	case SUFFIX:
-		ix := r.Intn(len(ctx.suffix))
-		return string(ctx.suffix[ix])
+		ix := r.Intn(len(ctx.Suffix))
+		return string(ctx.Suffix[ix])
 	default:
-		ix := r.Intn(len(ctx.syllables))
-		return string(ctx.syllables[ix])
+		ix := r.Intn(len(ctx.Syllables))
+		return string(ctx.Syllables[ix])
 	}
 }
